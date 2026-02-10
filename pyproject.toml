@@ -1,0 +1,90 @@
+[build-system]
+requires = ['setuptools>=42']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "archbench"
+version = "0.1.0"
+authors = [
+    {name = "SA4S Research Group", email = "sa4s@iiit.ac.in"},
+]
+description = "ArchBench - A benchmark for evaluating LLMs on software architecture tasks"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["benchmark", "software architecture", "llm", "adr", "traceability"]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Minimal dependencies - no torch/transformers required for basic use
+dependencies = [
+    "tqdm>=4.65.0",
+    "rich>=13.0.0",
+    "python-dotenv>=1.0.0",
+    "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+# For evaluation with text metrics (ROUGE, BLEU, METEOR) - no torch needed
+eval = [
+    "rouge-score>=0.1.2",
+    "nltk>=3.8.0",
+    "evaluate>=0.4.0",
+]
+# For BERTScore (requires torch) - optional
+bertscore = [
+    "bert-score>=0.3.13",
+    "torch>=2.0.0",
+]
+# For API-based inference (OpenAI, Anthropic) - no torch needed
+inference = [
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "tiktoken>=0.5.0",
+]
+# For local model inference (requires torch)
+inference-local = [
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
+]
+# For HuggingFace datasets
+datasets = [
+    "datasets>=2.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+]
+# Full installation with everything
+all = [
+    "archbench[eval,bertscore,inference,inference-local,datasets,dev]",
+]
+
+[project.scripts]
+archbench = "archbench.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/sa4s-serc/archbench"
+"Documentation" = "https://github.com/sa4s-serc/archbench"
+"Bug Reports" = "https://github.com/sa4s-serc/archbench/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["archbench*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
