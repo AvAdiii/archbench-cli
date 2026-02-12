@@ -65,7 +65,26 @@ archbench inference \
     --prompt_style few_shot
 ```
 
-### 3. Validate Submission
+### 3. LLM-as-a-Judge
+
+Get a qualitative assessment of your predictions using another LLM as a judge. This makes a single API call with aggregated metrics and a few sampled instances, and returns an overall score with strengths, weaknesses, and cited examples.
+
+```bash
+# Judge ADR predictions (auto-detects metrics from previous evaluation)
+archbench judge \
+    --task adr \
+    --predictions_path results/predictions.jsonl \
+    --judge_model gpt-4
+
+# Control how many instances are sampled into the prompt
+archbench judge \
+    --task adr \
+    --predictions_path results/predictions.jsonl \
+    --judge_model gpt-4 \
+    --sample_count 10
+```
+
+### 4. Validate Submission
 
 ```bash
 # Check if your predictions file is correctly formatted
