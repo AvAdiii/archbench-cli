@@ -24,6 +24,7 @@ def main():
 Examples:
   archbench evaluate --task adr --predictions_path predictions.jsonl --dataset_path data/0_shot.csv
   archbench inference --task adr --model gpt-4 --dataset_path data/0_shot.csv --output_dir results/
+  archbench judge --task adr --predictions_path predictions.jsonl --judge_model gpt-4
   archbench validate --task adr --predictions_path predictions.jsonl
 
 Available tasks:
@@ -83,6 +84,22 @@ For more information, visit: https://github.com/sa4s-serc/archbench
     )
     val_parser.add_argument("-t", "--task", required=True, choices=list(TASKS.keys()))
     val_parser.add_argument("-p", "--predictions_path", required=True, help="Path to predictions file")
+
+    # Judge command (LLM-as-a-judge evaluation)
+    judge_parser = subparsers.add_parser(
+        "judge",
+        help="Run LLM-as-a-judge evaluation on predictions",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    judge_parser.add_argument("-t", "--task", required=True, choices=list(TASKS.keys()))
+    judge_parser.add_argument("-p", "--predictions_path", required=True, help="Path to predictions JSONL")
+    judge_parser.add_argument("-d", "--dataset_path", default=None, help="Path to dataset file (auto-downloads if not provided)")
+    judge_parser.add_argument("-j", "--judge_model", default="gpt-4", help="Model to use as judge")
+    judge_parser.add_argument("-o", "--output_dir", default="results", help="Output directory")
+    judge_parser.add_argument("--sample_count", type=int, default=5, help="Number of instances to sample for the judge prompt")
+    judge_parser.add_argument("--report_path", default=None, help="Path to evaluation report.json (auto-detected if not provided)")
+    judge_parser.add_argument("--metrics_path", default=None, help="Path to per-instance metrics JSONL (auto-detected if not provided)")
+    judge_parser.add_argument("--run_id", default=None, help="Unique run identifier")
 
     # Download command (placeholder)
     dl_parser = subparsers.add_parser(
@@ -157,6 +174,20 @@ For more information, visit: https://github.com/sa4s-serc/archbench
                 if metric.endswith('_mean'):
                     print(f"  {metric.replace('_mean', '')}: {value:.4f}")
             print(f"{'='*60}\n")
+
+    elif args.command == "judge":
+        from archbench.harness.llm_judge import run_llm_judge
+        report = run_llm_judge(
+            task=args.task,
+            predictions_path=args.predictions_path,
+            dataset_path=args.dataset_path,
+            judge_model=args.judge_model,
+            output_dir=args.output_dir,
+            sample_count=args.sample_count,
+            report_path=args.report_path,
+            instance_metrics_path=args.metrics_path,
+            run_id=args.run_id,
+        )
 
     elif args.command == "validate":
         from archbench.harness.utils import load_predictions, validate_predictions
