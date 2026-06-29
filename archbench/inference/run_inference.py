@@ -271,11 +271,72 @@ class AnthropicProvider(ModelProvider):
         return text, metadata
 
 
-def get_provider(model_name: str) -> ModelProvider:
+class OllamaProvider(ModelProvider):
+    """Ollama local inference provider via OpenAI-compatible API."""
+
+    def __init__(self, model_name: str, host: str = "http://localhost:11434", **kwargs):
+        super().__init__(model_name, **kwargs)
+        import httpx
+        self.client = httpx.Client(timeout=120)
+        self.base_url = host.rstrip("/")
+        self.ollama_model = model_name[len("ollama/"):] if model_name.startswith("ollama/") else model_name
+
+    def generate(
+        self,
+        messages: List[Dict],
+        max_tokens: int = 1024,
+        temperature: float = 0.2,
+        **kwargs,
+    ) -> Tuple[str, Dict]:
+        start_time = time.time()
+
+        print(f"[DEBUG] Calling Ollama with model: {self.ollama_model}")
+
+        data = {
+            "model": self.ollama_model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": False,
+        }
+
+        try:
+            response = self.client.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=data,
+            )
+            response.raise_for_status()
+            result = response.json()
+        except Exception as e:
+            print(f"[DEBUG] Ollama ERROR: {type(e).__name__}: {e}")
+            raise
+
+        latency_ms = (time.time() - start_time) * 1000
+        print(f"[DEBUG] Ollama call successful, latency: {latency_ms:.0f}ms")
+
+        text = result["choices"][0]["message"]["content"]
+        usage = result.get("usage", {})
+        metadata = {
+            "model": result.get("model", self.ollama_model),
+            "usage": {
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": usage.get("completion_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
+            },
+            "finish_reason": result["choices"][0].get("finish_reason"),
+            "latency_ms": latency_ms,
+        }
+
+        return text, metadata
+
+
+def get_provider(model_name: str, ollama_host: str = "http://localhost:11434") -> ModelProvider:
     """Get the appropriate provider for a model."""
     model_lower = model_name.lower()
 
-    if any(x in model_lower for x in ["gpt-4", "gpt-3.5", "davinci", "text-"]):
+    if model_lower.startswith("ollama/"):
+        return OllamaProvider(model_name, host=ollama_host)
+    elif any(x in model_lower for x in ["gpt-4", "gpt-3.5", "davinci", "text-"]):
         return OpenAIProvider(model_name)
     elif any(x in model_lower for x in ["claude"]):
         return AnthropicProvider(model_name)
@@ -422,6 +483,7 @@ def run_inference(
     instance_ids: Optional[List[str]] = None,
     resume_from: Optional[str] = None,
     limit: Optional[int] = None,
+    ollama_host: str = "http://localhost:11434",
 ) -> Dict[str, Any]:
     """
     Run inference on an entire dataset.
@@ -481,7 +543,7 @@ def run_inference(
         logger.info(f"Loaded {len(existing_predictions)} existing predictions")
 
     # Initialize provider and trajectory logger
-    provider = get_provider(model)
+    provider = get_provider(model, ollama_host=ollama_host)
     traj_logger = TrajectoryLogger(output_dir, run_id)
 
     # Setup output
@@ -652,6 +714,12 @@ def main():
         default=None,
         help="Path to existing predictions file to resume from",
     )
+    parser.add_argument(
+        "--ollama_host",
+        type=str,
+        default="http://localhost:11434",
+        help="Ollama server URL (for ollama/ models)",
+    )
 
     args = parser.parse_args()
 
@@ -666,6 +734,7 @@ def main():
         run_id=args.run_id,
         instance_ids=args.instance_ids,
         resume_from=args.resume_from,
+        ollama_host=args.ollama_host,
     )
 
 

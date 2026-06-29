@@ -75,6 +75,7 @@ For more information, visit: https://github.com/sa4s-serc/archbench
     infer_parser.add_argument("--resume_from", default=None, help="Resume from existing predictions")
     infer_parser.add_argument("--limit", type=int, default=None, help="Limit number of instances to process (for testing)")
     infer_parser.add_argument("--evaluate", action="store_true", help="Automatically run evaluation after inference")
+    infer_parser.add_argument("--ollama_host", default="http://localhost:11434", help="Ollama server URL (for ollama/ models)")
 
     # Validate command
     val_parser = subparsers.add_parser(
@@ -100,6 +101,7 @@ For more information, visit: https://github.com/sa4s-serc/archbench
     judge_parser.add_argument("--report_path", default=None, help="Path to evaluation report.json (auto-detected if not provided)")
     judge_parser.add_argument("--metrics_path", default=None, help="Path to per-instance metrics JSONL (auto-detected if not provided)")
     judge_parser.add_argument("--run_id", default=None, help="Unique run identifier")
+    judge_parser.add_argument("--ollama_host", default="http://localhost:11434", help="Ollama server URL (for ollama/ models)")
 
     # Download command (placeholder)
     dl_parser = subparsers.add_parser(
@@ -147,6 +149,7 @@ For more information, visit: https://github.com/sa4s-serc/archbench
             run_id=args.run_id,
             resume_from=args.resume_from,
             limit=args.limit,
+            ollama_host=args.ollama_host,
         )
 
         # Run evaluation if requested
@@ -187,6 +190,7 @@ For more information, visit: https://github.com/sa4s-serc/archbench
             report_path=args.report_path,
             instance_metrics_path=args.metrics_path,
             run_id=args.run_id,
+            ollama_host=args.ollama_host,
         )
 
     elif args.command == "validate":

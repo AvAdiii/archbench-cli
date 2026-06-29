@@ -283,6 +283,7 @@ def run_llm_judge(
     run_id: Optional[str] = None,
     max_tokens: int = 1024,
     temperature: float = 0.1,
+    ollama_host: str = "http://localhost:11434",
 ) -> Dict[str, Any]:
     """
     Run LLM-as-a-judge: one prompt, one call, one overall assessment.
@@ -396,7 +397,7 @@ def run_llm_judge(
     )
 
     # One LLM call
-    provider = get_provider(judge_model)
+    provider = get_provider(judge_model, ollama_host=ollama_host)
     logger.info(f"Calling {judge_model} for overall assessment...")
 
     try:

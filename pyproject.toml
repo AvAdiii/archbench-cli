@@ -43,11 +43,12 @@ bertscore = [
     "bert-score>=0.3.13",
     "torch>=2.0.0",
 ]
-# For API-based inference (OpenAI, Anthropic) - no torch needed
+# For API-based inference (OpenAI, Anthropic, Ollama) - no torch needed
 inference = [
     "openai>=1.0.0",
     "anthropic>=0.18.0",
     "tiktoken>=0.5.0",
+    "httpx>=0.24.0",
 ]
 # For local model inference (requires torch)
 inference-local = [
